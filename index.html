@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guia de Estudos · React, Axios, LLMs e Agentes</title>
+<style>
+:root{--bg:#f6f8fa;--card:#fff;--tx:#17212b;--mut:#5b6877;--bd:#dde3ea;--ac:#0e6ba8;--ok:#1a7f37;--okb:#e3f6e8;--no:#c62828;--nob:#fdeaea;--code:#eef2f6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161d;--card:#18212b;--tx:#e6edf3;--mut:#9aa7b5;--bd:#2a3644;--ac:#4fb3f0;--ok:#5fd37c;--okb:#12301c;--no:#ff7b72;--nob:#3a1a1a;--code:#0d131a}}
+:root[data-theme="dark"]{--bg:#10161d;--card:#18212b;--tx:#e6edf3;--mut:#9aa7b5;--bd:#2a3644;--ac:#4fb3f0;--ok:#5fd37c;--okb:#12301c;--no:#ff7b72;--nob:#3a1a1a;--code:#0d131a}
+*{box-sizing:border-box}html{scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);border-bottom:1px solid var(--bd);z-index:5;padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+header b{margin-right:auto}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:6px 14px}
+button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 20px 14px;margin-bottom:18px}
+h2{color:var(--ac);margin:14px 0 4px;font-size:1.3rem}h3{margin:16px 0 4px;font-size:1.02rem}
+code,pre{background:var(--code);border-radius:6px;font:13.5px ui-monospace,Menlo,Consolas,monospace}
+code{padding:1px 5px}pre{padding:10px 12px;overflow-x:auto}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border:1px solid var(--bd);padding:6px 9px;text-align:left}th{background:var(--code)}
+.tip{border-left:4px solid var(--ac);background:var(--code);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+ul{padding-left:20px;margin:6px 0}
+.q{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 18px;margin-bottom:14px}
+.q p{margin:0 0 8px;font-weight:600}.q small{color:var(--mut)}
+.o{display:block;width:100%;text-align:left;margin:6px 0}
+.o.ok{background:var(--okb);border-color:var(--ok);color:var(--ok)}.o.no{background:var(--nob);border-color:var(--no);color:var(--no)}
+.ex{margin-top:8px;color:var(--mut);font-size:.92rem}
+#sc{position:sticky;top:60px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 14px;margin-bottom:14px;z-index:4;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hide{display:none}
+</style></head><body>
+<header><b>📘 Guia de Estudos</b><button id="t1" class="on">Matéria</button><button id="t2">Quiz (50)</button></header>
+<main>
+<div id="guia">
+
+<section><h2>1. React: ciclo de vida e useEffect</h2>
+<p>Todo componente passa por 3 fases. Em <b>funcionais</b>, tudo fica no <code>useEffect</code>.</p>
+<div class="tw"><table><tr><th>Fase</th><th>Classe</th><th>Hook</th><th>Uso</th></tr>
+<tr><td>Montagem</td><td>componentDidMount</td><td><code>useEffect(fn, [])</code></td><td>Buscar dados iniciais</td></tr>
+<tr><td>Atualização</td><td>componentDidUpdate</td><td><code>useEffect(fn, [valor])</code></td><td>Refazer busca quando filtro muda</td></tr>
+<tr><td>Desmontagem</td><td>componentWillUnmount</td><td><code>return () =&gt; {…}</code></td><td>Cancelar timer/listener/requisição</td></tr></table></div>
+<ul><li><b>[]</b>: roda 1 vez, após o primeiro render (nada muda, nunca fica “desatualizado”).</li>
+<li><b>[valor]</b>: roda na montagem <b>e</b> sempre que valor mudar.</li>
+<li>Array de dependências: tudo que o efeito usa de fora (props, estado, funções). O ESLint (<code>eslint-plugin-react-hooks</code>) avisa se faltar.</li>
+<li><b>Loop infinito</b>: efeito faz <code>setState</code> do mesmo valor listado nas dependências.</li>
+<li>A <b>limpeza</b> roda na desmontagem <b>e também antes de cada nova execução</b> do efeito.</li>
+<li>Em classes, uma lógica (assinar/remover evento) ficava espalhada em 2 métodos; hooks juntam tudo.</li></ul>
+<pre>useEffect(() =&gt; {
+  const id = setInterval(() =&gt; setHora(new Date()), 1000);
+  return () =&gt; clearInterval(id); // evita setState em componente que saiu
+}, []);</pre></section>
+
+<section><h2>2. HTTP, Axios e JSON-Server</h2>
+<h3>Métodos e status</h3>
+<div class="tw"><table><tr><th>Método</th><th>Intenção</th></tr><tr><td>GET</td><td>Buscar, sem alterar</td></tr><tr><td>POST</td><td>Criar</td></tr><tr><td>PUT</td><td>Substituir por completo</td></tr><tr><td>PATCH</td><td>Atualizar parcialmente</td></tr><tr><td>DELETE</td><td>Remover</td></tr></table></div>
+<p><b>2xx</b> sucesso (200 OK, 201 Created) · <b>4xx</b> erro do cliente (400, 401, 404) · <b>5xx</b> erro do servidor (500). Requisições são <b>assíncronas</b> (Promise, .then/.catch, async/await) e os dados vêm em <b>JSON</b>.</p>
+<h3>Axios x fetch</h3>
+<ul><li>Axios já entrega o JSON em <code>resposta.data</code> (fetch exige <code>.json()</code>).</li>
+<li>Erros 4xx/5xx caem direto no <code>.catch()</code> (no fetch não).</li>
+<li><code>axios.create()</code> cria instância com <code>baseURL</code> fixa. Instalar: <code>npm install axios</code>.</li>
+<li>POST: 2º argumento é um objeto JS comum, sem <code>JSON.stringify</code>.</li></ul>
+<pre>// src/services/api.js
+import axios from 'axios';
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+export default api;
+
+// no componente
+useEffect(() =&gt; {
+  api.get('/usuarios').then(r =&gt; setUsuarios(r.data))
+    .catch(console.error).finally(() =&gt; setCarregando(false));
+}, []);</pre>
+<h3>Variáveis de ambiente (Vite)</h3>
+<ul><li>Só variáveis com prefixo <code>VITE_</code> vão ao navegador (segurança). Lidas via <code>import.meta.env</code>.</li>
+<li><code>.env</code> (todos), <code>.env.development</code> (npm run dev), <code>.env.production</code> (npm run build).</li>
+<li><code>.env</code> no <code>.gitignore</code>; versionar um <code>.env.example</code> só com as chaves.</li></ul>
+<h3>JSON Server (mock)</h3>
+<p>Mock = versão falsa do servidor para o front não ficar bloqueado. O <code>db.json</code> vira API REST: cada chave de topo é uma coleção.</p>
+<pre>npx json-server@0 db.json -p 8080 -w</pre>
+<ul><li><code>-p 8080</code> porta · <code>-w</code> watch (reinicia ao salvar) · <code>@0</code> fixa a versão 0.x (a 1.x mudou formato das respostas e exige config extra).</li>
+<li>Rotas: GET /usuarios, GET /usuarios/1, POST /usuarios, PUT /usuarios/1, DELETE /usuarios/1.</li>
+<li>Ligar: <code>VITE_API_URL=http://localhost:8080</code>. Quando a API real ficar pronta, só troca a variável.</li></ul></section>
+
+<section><h2>3. LLMs</h2>
+<ul><li><b>LLM</b> (Large Language Model): modelo deep learning treinado com enormes quantidades de dados; <b>máquina de predição estatística</b> que prevê a próxima palavra.</li>
+<li><b>Modelo</b> aprende de exemplos · <b>Deep learning</b> = redes neurais com muitas camadas · <b>Large</b> = bilhões de parâmetros · <b>Predição</b> = calcula a chance de cada palavra seguinte.</li>
+<li><b>Consequência</b>: gera o texto mais plausível, não necessariamente o verdadeiro → <b>alucinação</b>.</li>
+<li><b>Word vector</b>: cada palavra vira um ponto em espaço de centenas/milhares de dimensões (analogia: lat/long). Perto = uso parecido. Direções carregam relações: <i>rei − homem + mulher ≈ rainha</i>. As dimensões não têm nome.</li>
+<li><b>Caminho</b>: texto → tokens → IDs → vetores. Token = pedaço de texto (palavra, parte ou pontuação).</li>
+<li><b>Treino</b>: vetores começam aleatórios; ciclo <i>prever → medir erro → ajustar</i>, bilhões de vezes. Ajusta todos os parâmetros. É a parte cara. Depois, o modelo <b>não aprende sozinho</b>: a conversa não altera os números internos.</li>
+<li><b>Transformer</b>: atenção, cada palavra “olha” as vizinhas (banco da praça × banco de dinheiro). A saída é lista de probabilidades; escolhe entre as mais prováveis com um pouco de aleatoriedade (por isso respostas diferentes).</li></ul>
+<h3>O que muda de um modelo para outro</h3>
+<ul><li><b>Modalidade</b> (texto, imagem, áudio, vídeo; multimodais) · <b>Tamanho</b> (maior = mais capaz, lento, caro) · <b>Janela de contexto</b> (quanto lê de uma vez) · <b>Data de corte</b> (fim dos dados de treino; depois só com ferramentas) · <b>Acesso</b> (proprietário via API/produto; aberto roda na sua máquina).</li></ul>
+<div class="tip"><b>Modelo é o motor; produto é o carro.</b> ChatGPT, Claude Code e app do Gemini são produtos. Não existe “o melhor modelo”: existe o adequado a custo, velocidade e qualidade.</div></section>
+
+<section><h2>4. Tools, RAG e MCP</h2>
+<ul><li><b>AI Tools</b>: funções, APIs, apps que o modelo usa para tarefas além da capacidade nativa (ex.: hora atual, clima, banco de dados, arquivos). Têm descrição, parâmetros e resultado esperado. O modelo decide sozinho se faz uma <b>tool call</b>.</li></ul>
+<p><b>Anatomia</b>: 1) app envia pergunta + lista de tools → 2) modelo devolve pedido (nome + parâmetros) → 3) <b>a aplicação executa</b> a função e controla permissões → 4) resultado volta ao modelo como texto → 5) modelo escreve a resposta. <b>Cada ida e volta é uma chamada ao modelo: custa tempo e tokens.</b></p>
+<p>Tipos: execução de código, APIs, documentos, busca (web, RAG), geolocalização, agenda, e-commerce.</p>
+<ul><li><b>RAG</b> (geração aumentada por recuperação): pergunta → busca → trechos → resposta. Forma mais comum de responder sobre conteúdo que não estava no treino.</li>
+<li><b>MCP</b> (Model Context Protocol): protocolo padrão, a “tomada universal”: a tool é escrita uma vez e várias aplicações usam. No Foundry aparece como “servidores MCP”.</li></ul></section>
+
+<section><h2>5. Agentes, Skills e Multi-agentes</h2>
+<div class="tw"><table><tr><th></th><th>Assistente</th><th>Agente</th></tr>
+<tr><td>Decisão / iniciativa</td><td>Reage a prompts, não decide</td><td>Toma iniciativa e decide quais ações</td></tr>
+<tr><td>Planejamento</td><td>Não tem; interação a cada etapa</td><td>Planeja, observa a resposta, separa em etapas</td></tr>
+<tr><td>Foco</td><td>Responder (chat)</td><td>Resultados (objetivos)</td></tr>
+<tr><td>Exemplos</td><td>Claude AI, ChatGPT, Gemini</td><td>Claude Code, GitHub Copilot, Antigravity</td></tr></table></div>
+<p><b>Agente = LLM (cérebro) + Tools (mãos) + Objetivo + Ciclo (repetir até terminar).</b> Sem o ciclo, sobra um assistente com ferramentas. Assistente = estagiário (você dita cada passo); agente = profissional experiente (você dá o objetivo). Um produto pode ser os dois (ex.: Copilot).</p>
+<p><b>Componentes</b>: percepção/processamento · pensamento e decisão · planejamento · ação · memória (curto prazo = histórico da tarefa; longo prazo = anotações; o modelo <u>não</u> é retreinado) · aprendizado/adaptação (mudar a rota).</p>
+<ul><li><b>ReAct</b>: pensa → age → observa → repete. Flexível, replaneja na hora, porém mais lento/custoso (relê histórico que só cresce). Bom para tarefas imprevisíveis.</li>
+<li><b>ReWOO</b>: Planner → Worker (tools) → Solver. Poucas chamadas, menos tokens, mas o plano não se ajusta sozinho. Bom para tarefas previsíveis. Na prática, mistura-se os dois.</li></ul>
+<h3>Skills</h3>
+<ul><li>Conjunto de instruções, scripts e/ou recursos que o agente carrega dinamicamente; a “receita de bolo”. <b>Não executa ações por si só, apenas orienta.</b></li>
+<li>Ganho: experiência vira instrução, atualiza o que o modelo sabe. Exemplo da aula: 25% → 95% de acerto com skills (mesmo agente/modelo). Muitas vezes o salto vem de explicar melhor a tarefa.</li>
+<li><b>Cuidado</b>: skill de terceiros é instrução que seu agente vai obedecer, com acesso às suas ferramentas: leia antes de instalar. Formato <code>SKILL.md</code>.</li></ul>
+<h3>Multi-agentes</h3>
+<ul><li>Um orquestrador delega a agentes especialistas. Ganhos: <b>foco</b> (4 tools decidem melhor que 40), <b>contexto limpo</b>, <b>paralelismo</b>. Preço: mais custo (mais chamadas) e mais coordenação.</li>
+<li><b>Regra prática</b>: comece com um agente; divida se tarefas independentes, tools demais ou paralelismo compensar.</li></ul></section>
+
+<section><h2>6. Azure for Students, Foundry e OpenCode</h2>
+<ul><li><b>Azure for Students</b>: benefício gratuito, <b>US$ 100 de crédito</b>, sem cartão. Ativar em azure.microsoft.com/pt-br/free/students com e-mail <code>@sptech.school</code>, verificação acadêmica, telefone próprio, CNPJ em branco, endereço da faculdade, marcar só a 1ª caixa de termos.</li>
+<li><b>Microsoft Foundry</b> (antigo Azure AI Foundry): plataforma para criar, publicar e governar agentes. +10.000 modelos, tools/MCP compartilhadas, observabilidade. Concorrentes: Amazon Bedrock, Vertex AI Agent Builder, watsonx Orchestrate, Agentforce.</li>
+<li><b>OpenCode</b>: agente de código open source (MIT), independente de modelo, 75+ provedores. <b>Não é um LLM</b>: fornece tools e o loop do agente. Instruções do projeto em <code>AGENTS.md</code>. Similares: Claude Code, Codex CLI, Gemini CLI, Cursor, Cline, Aider.</li></ul>
+<h3>Passo a passo</h3>
+<p><b>Foundry</b>: criar recurso (guarde o nome, entra na URL) → Go to Foundry portal → Compilação → escolher modelo → Implantar (Configurações padrão) → status Succeeded → em <b>Detalhes</b> copiar <b>Ponto de extremidade + Chave</b>. Prefira modelos leves (ex.: gpt-5.1-codex-mini); nem todo modelo está disponível (região/cota).</p>
+<p><b>OpenCode</b>: <code>npm install -g opencode-ai</code> → <code>opencode</code> → <code>/connect</code> → provedor <b>Azure</b> (≠ Azure Cognitive Services) → método <b>API key</b> → nome do recurso → colar a chave → escolher modelo → “Hello AI”. Trocar modelo: <code>/models</code>. Config por arquivo: <code>~/.config/opencode/opencode.json</code>; guarde a chave com <code>opencode auth login</code> e <b>nunca comite a API key</b>.</p></section>
+</div>
+
+<div id="quiz" class="hide">
+<div id="sc"><span>Respondidas: <b id="a">0</b>/50</span><span>Acertos: <b id="c">0</b></span><button id="rs">Recomeçar</button></div>
+<div id="qs"></div></div>
+</main>
+<script>
+const Q=[
+["Qual hook concentra montagem, atualização e desmontagem em componentes funcionais?",["useState","useEffect","useRef","useMemo"],1,"O useEffect cobre as três fases."],
+["useEffect(fn, []) equivale a qual método de classe?",["componentDidUpdate","componentDidMount","componentWillUnmount","render"],1,"Array vazio = roda uma vez após o primeiro render."],
+["Quando um efeito com array de dependências vazio roda?",["A cada render","Só uma vez, após o primeiro render","Só ao desmontar","Nunca"],1,"Sem dependências, nada muda, então não roda de novo."],
+["useEffect(fn, [filtro]) roda:",["Só na montagem","Na montagem e sempre que filtro mudar","Só quando filtro for vazio","Só ao desmontar"],1,"Montagem + cada mudança de filtro."],
+["A função retornada dentro do useEffect é:",["Uma dependência","A limpeza, executada antes do componente sair de tela","Um callback de render","Um erro"],1,"É o cleanup (equivale a componentWillUnmount)."],
+["Como surge um loop infinito com useEffect?",["O efeito faz setState do mesmo valor listado nas dependências","Usando array vazio","Usando return","Usando console.log"],0,"setState altera a dependência, que dispara o efeito de novo."],
+["Por que chamar clearInterval no cleanup de um relógio?",["Acelerar o relógio","Evitar atualizar estado de componente que já saiu de tela","Reiniciar a hora","É exigência da sintaxe"],1,"Senão o setInterval continua rodando em segundo plano."],
+["Em um efeito com dependências, a função de limpeza também roda:",["Só na desmontagem final","Antes de cada nova execução do efeito","Nunca","Só no primeiro render"],1,"A versão anterior é desfeita antes da próxima começar."],
+["O que deve entrar no array de dependências?",["Só o estado","Tudo que o efeito usa vindo de fora (props, estado, funções)","Nada","Só props"],1,"Tudo que vem de fora do efeito."],
+["Em componentes de classe, a lógica assinar/remover evento ficava:",["Num método só","Espalhada entre componentDidMount e componentWillUnmount","No constructor","No render"],1,"Hooks passaram a juntar tudo no mesmo bloco."],
+["Qual método HTTP cria um novo recurso?",["GET","POST","PUT","DELETE"],1,"POST = criar."],
+["PATCH serve para:",["Substituir por completo","Atualizar parcialmente","Remover","Listar"],1,"PUT substitui tudo; PATCH altera parte."],
+["Um status 404 indica:",["Sucesso","Erro do cliente (não encontrado)","Erro do servidor","Recurso criado"],1,"4xx = erro do cliente."],
+["Códigos 5xx representam:",["Sucesso","Redirecionamento","Erro do servidor","Erro do cliente"],2,"Ex.: 500 Internal Server Error."],
+["Diferença do Axios para o fetch:",["Axios exige .json() manual","Axios entrega resposta.data e rejeita 4xx/5xx no .catch","fetch rejeita 404 sozinho","Não há diferença"],1,"O Axios converte JSON e trata erros de status."],
+["Como instalar o Axios?",["npm install axios","npx axios","pip install axios","npm run axios"],0,"npm install axios."],
+["Para que serve axios.create()?",["Criar um servidor","Criar uma instância com baseURL fixa","Criar componente","Criar rota"],1,"Evita repetir a URL do servidor."],
+["Em qual prefixo as variáveis de ambiente do Vite são expostas ao navegador?",["REACT_APP_","VITE_","PUBLIC_","API_"],1,"Só VITE_* entra no bundle (segurança)."],
+["Como ler a URL da API no Vite?",["process.env.URL","import.meta.env.VITE_API_URL","window.env.URL","require('env')"],1,"Via import.meta.env."],
+["Boa prática com o arquivo .env:",["Versionar com segredos","Colocar no .gitignore e manter um .env.example","Apagar","Enviar por e-mail"],1,"O .env.example traz só as chaves."],
+["No comando npx json-server@0 db.json -p 8080 -w, o -w significa:",["Porta","Watch: reinicia ao salvar o db.json","Versão","Write"],1,"Recarregamento automático."],
+["Por que fixar json-server@0?",["A 1.x mudou o formato de respostas e exige config extra","0.x é mais recente","O npx exige","Sem motivo"],0,"Evita surpresas no uso didático."],
+["No db.json, cada chave de nível superior vira:",["Uma porta","Uma coleção (recurso REST)","Uma variável","Um componente"],1,"Ex.: usuarios gera /usuarios."],
+["Um mock é:",["Versão falsa do servidor, usada em desenvolvimento e testes","Banco de produção","Biblioteca de CSS","Hook"],0,"Front não fica bloqueado esperando o back."],
+["No POST com Axios, o corpo é:",["String com JSON.stringify","Objeto JS comum no 2º argumento","FormData obrigatório","Query string"],1,"api.post('/usuarios', { nome, email })."],
+["O que é um LLM?",["Banco de dados","Modelo deep learning treinado com muitos dados, que prevê a próxima palavra","Linguagem de programação","Motor de busca"],1,"Máquina de predição estatística."],
+["“Large”, em LLM, refere-se a:",["Tamanho do arquivo","Quantidade de parâmetros (bilhões)","Tamanho da tela","Janela de contexto"],1,"Parâmetros são os números ajustáveis da rede."],
+["A alucinação ocorre porque o modelo:",["Gera o texto mais plausível, não necessariamente o verdadeiro","Perde internet","Falta GPU","Usa cache"],0,"Consequência da predição estatística."],
+["Um word vector é:",["Lista de sinônimos","Representação numérica da palavra em espaço de várias dimensões","Hash","Palavra em maiúsculas"],1,"Como lat/long, mas com centenas/milhares de dimensões."],
+["rei − homem + mulher ≈",["princesa","rainha","reino","mulher"],1,"As direções carregam relações."],
+["Token é:",["Sempre uma palavra inteira","Pedaço de texto: palavra, parte dela ou pontuação","Uma senha","Um parâmetro"],1,"Ex.: cachorrinho → cach | orr | inho."],
+["Qual a ordem correta do caminho do texto?",["Texto → tokens → IDs → vetores","Vetores → texto → IDs","IDs → texto → tokens","Tokens → vetores → texto"],0,"Cada ID aponta para o seu vetor."],
+["O ciclo de treino é:",["Prever a próxima palavra → medir o erro → ajustar números (bilhões de vezes)","Ler → copiar → colar","Medir → compilar","Executar → publicar"],0,"Todos os parâmetros são ajustados juntos."],
+["Depois de treinado, o modelo:",["Aprende com cada conversa","Não aprende sozinho; sua conversa não altera os números internos","Se retreina todo dia","Reescreve parâmetros"],1,"Treinar é a parte cara; depois só é usado."],
+["A arquitetura em que cada palavra “olha” as vizinhas é o:",["CNN","Transformer","Árvore de decisão","Banco relacional"],1,"Mecanismo de atenção (banco da praça × banco de dinheiro)."],
+["Por que a mesma pergunta pode gerar respostas diferentes?",["Erro do sistema","Escolhe entre as mais prováveis com um pouco de aleatoriedade","Falta de internet","Cache"],1,"A saída é uma lista de probabilidades."],
+["Sobre modelo e produto:",["Modelo é o motor; produto (ChatGPT, Claude Code) é o carro","São a mesma coisa","Produto é o motor","Modelo é só interface"],0,"Produtos são construídos em cima de modelos."],
+["Janela de contexto é:",["Quanto texto o modelo lê de uma vez","A data de corte","O número de parâmetros","O preço"],0,"Conversa, arquivos e instruções."],
+["Data de corte indica:",["Até quando vão os dados de treino","Quando o modelo expira","O preço","A região"],0,"Depois disso, só com ferramentas."],
+["Uma AI Tool é:",["Função/API que o modelo usa para tarefas além da sua capacidade nativa","Um tipo de LLM","Um dataset","Uma skill"],0,"Ex.: ver hora atual, clima, banco de dados."],
+["Numa tool call, quem executa a função?",["O modelo","A aplicação, que também controla permissões","O usuário","O Foundry"],1,"O modelo só devolve o pedido (nome + parâmetros)."],
+["Cada ida e volta de uma tool call:",["É gratuita","É uma chamada ao modelo: custa tempo e tokens","Não usa tokens","Roda só local"],1,"Importante para entender o custo dos agentes."],
+["RAG significa:",["Buscar trechos nos seus documentos e entregar ao modelo com a pergunta","Retreinar o modelo","Protocolo de tools","Um tipo de agente"],0,"Geração aumentada por recuperação."],
+["MCP é:",["Protocolo padrão para conectar tools a qualquer app de IA (tomada universal)","Um modelo","Um banco","Uma linguagem"],0,"Model Context Protocol; no Foundry: servidores MCP."],
+["Um agente é:",["LLM + tools + objetivo + ciclo","LLM + chat","Tools + dados","Só um LLM"],0,"Sem o ciclo, sobra um assistente com ferramentas."],
+["Sobre ReAct e ReWOO:",["ReAct pensa-age-observa-repete (flexível, custoso); ReWOO planeja tudo antes (menos tokens, menos flexível)","São idênticos","ReWOO replaneja sozinho","ReAct planeja tudo antes"],0,"ReAct p/ tarefas imprevisíveis; ReWOO p/ previsíveis."],
+["Uma Skill:",["Executa ações sozinha","Orienta o agente com instruções/scripts, sem executar ações por si só","É um LLM menor","É uma API"],1,"É a “receita de bolo”."],
+["Regra prática para multi-agentes:",["Sempre use vários","Comece com um agente; divida se tarefas independentes, tools demais ou paralelismo compensar","Nunca use","Um agente por tool"],1,"Mais agentes = mais custo e coordenação."],
+["Quanto crédito o Azure for Students oferece (conforme a aula)?",["US$ 100, sem cartão","US$ 1.000","Ilimitado","US$ 10"],0,"Nem todo modelo estará disponível (região/cota)."],
+["Onde copiar endpoint e chave de um deployment no Foundry?",["Em Detalhes do modelo implantado","No GitHub","No terminal do OpenCode","No Azure CLI"],0,"Status Succeeded → Detalhes."],
+["Qual comando instala o OpenCode?",["npm install -g opencode-ai","pip install opencode","npx azure","apt install opencode"],0,"Depois rode opencode na pasta do projeto."],
+["No /connect, qual provedor escolher?",["Azure (não Azure Cognitive Services)","Azure Cognitive Services","Anthropic","Ollama"],0,"Atenção: Azure ≠ Azure Cognitive Services."],
+["Sobre a API key do Azure no OpenCode:",["Comitar no repositório","Guardar com opencode auth login e nunca comitar","Deixar no código","Publicar"],1,"Nunca comite a API key."]
+];
+const L="ABCD";let ans=0,hit=0;
+function build(){ans=hit=0;a.textContent=0;c.textContent=0;
+qs.innerHTML="";Q.forEach((q,i)=>{
+ const o=q[1].map((t,k)=>({t,r:k==q[2]}));
+ for(let j=o.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[o[j],o[k]]=[o[k],o[j]]}
+ const d=document.createElement("div");d.className="q";
+ d.innerHTML=`<small>Questão ${i+1}/50</small><p>${q[0]}</p>`;
+ o.forEach((x,k)=>{const b=document.createElement("button");b.className="o";b.textContent=L[k]+") "+x.t;
+  b.onclick=()=>{if(d.dataset.done)return;d.dataset.done=1;ans++;
+   const bs=[...d.querySelectorAll(".o")];bs.forEach((y,n)=>{if(o[n].r)y.classList.add("ok")});
+   if(x.r)hit++;else b.classList.add("no");
+   const e=document.createElement("div");e.className="ex";e.textContent=(x.r?"✅ Correto. ":"❌ Errado. ")+q[3];d.appendChild(e);
+   a.textContent=ans;c.textContent=hit;
+   if(ans==50)alert("Fim! Você acertou "+hit+" de 50 ("+Math.round(hit*2)+"%).");};
+  d.appendChild(b)});
+ qs.appendChild(d)})}
+rs.onclick=()=>{build();scrollTo(0,0)};
+function tab(n){guia.classList.toggle("hide",n);quiz.classList.toggle("hide",!n);t1.classList.toggle("on",!n);t2.classList.toggle("on",n);scrollTo(0,0)}
+t1.onclick=()=>tab(0);t2.onclick=()=>tab(1);build();
+</script></body></html>
